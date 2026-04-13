@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Do PIB à Renda Nacional — Atividade</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Nunito+Sans:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0d12;
+  --s1: #10141c;
+  --s2: #171c28;
+  --s3: #1f2637;
+  --brd: #272f42;
+  --brd2: #374058;
+  --tx: #dfe3ec;
+  --tx2: #8692a8;
+  --tx3: #5c6780;
+  --C: #22d3ee; --I: #a78bfa; --G: #fb923c; --X: #4ade80; --M: #f87171;
+  --nope: #64748b;
+  --pib: #22d3ee; --pnb: #f472b6; --pil: #facc15; --rn: #a78bfa; --df: #10b981; --bp: #f97316;
+  --ok: #34d399; --err: #f87171; --warn: #fbbf24;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--tx);font-family:'Nunito Sans',sans-serif;line-height:1.55;overflow-x:hidden;}
+
+.hdr{text-align:center;padding:2.2rem 1rem 1.4rem;border-bottom:1px solid var(--brd);background:var(--s1);}
+.hdr h1{font-family:'DM Serif Display',serif;font-size:clamp(1.5rem,4.5vw,2.5rem);color:var(--tx);margin-bottom:0.3rem;}
+.hdr h1 span{background:linear-gradient(135deg,var(--pib),var(--pnb),var(--pil),var(--rn));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hdr p{color:var(--tx2);font-size:0.88rem;max-width:600px;margin:0 auto;}
+
+#page-list{max-width:860px;margin:0 auto;padding:0 1rem 3rem;}
+#page-list.hide{display:none;}
+.list-intro{background:var(--s1);border:1px solid var(--brd);border-radius:10px;padding:1.2rem 1.4rem;margin:1.2rem 0;}
+.list-intro h2{font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--pib);margin-bottom:0.3rem;}
+.list-intro p{color:var(--tx2);font-size:0.86rem;line-height:1.7;}
+.list-intro strong{color:var(--tx);}
+.op-item{display:flex;align-items:flex-start;gap:0.7rem;background:var(--s1);border:1px solid var(--brd);border-radius:8px;padding:0.7rem 1rem;margin-bottom:0.45rem;}
+.op-item:hover{border-color:var(--brd2);}
+.op-n{font-family:'JetBrains Mono',monospace;font-size:0.7rem;font-weight:600;color:var(--tx3);background:var(--s2);padding:0.15rem 0.45rem;border-radius:3px;margin-top:3px;white-space:nowrap;}
+.op-t{flex:1;font-size:0.88rem;}
+.op-v{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:0.82rem;white-space:nowrap;margin-top:2px;color:var(--tx2);}
+
+.gate{text-align:center;margin:2rem 0;padding:1.5rem;background:var(--s1);border:1px solid var(--brd);border-radius:12px;max-width:480px;margin-left:auto;margin-right:auto;}
+.gate h3{font-family:'DM Serif Display',serif;font-size:1.1rem;margin-bottom:0.5rem;color:var(--warn);}
+.gate p{color:var(--tx2);font-size:0.84rem;margin-bottom:1rem;}
+.gate-input{font-family:'JetBrains Mono',monospace;font-size:1rem;padding:0.6rem 1rem;border-radius:7px;border:1px solid var(--brd);background:var(--s2);color:var(--tx);text-align:center;width:220px;outline:none;transition:border-color 0.2s;}
+.gate-input:focus{border-color:var(--pib);}
+.gate-btn{font-family:'Nunito Sans',sans-serif;font-size:0.88rem;font-weight:700;padding:0.55rem 1.5rem;border:none;border-radius:7px;background:var(--pib);color:#0a0d12;cursor:pointer;margin-left:0.5rem;transition:transform 0.2s;}
+.gate-btn:hover{transform:translateY(-2px);}
+.gate-err{color:var(--err);font-size:0.82rem;margin-top:0.6rem;display:none;}
+.gate-err.show{display:block;animation:shake 0.35s;}
+
+#page-activity{max-width:860px;margin:0 auto;padding:0 1rem 3rem;display:none;}
+#page-activity.show{display:block;}
+
+.prog{display:flex;max-width:780px;margin:0 auto;padding:1rem 0 0.6rem;}
+.prog-s{flex:1;text-align:center;padding:0.5rem 0.2rem;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--tx3);border-bottom:3px solid var(--brd);transition:all 0.3s;}
+.prog-s.active{color:var(--tx);}
+.prog-s.done{color:var(--ok);}
+.prog-s[data-s="0"].active,.prog-s[data-s="0"].done{border-color:var(--pib);}
+.prog-s[data-s="1"].active,.prog-s[data-s="1"].done{border-color:var(--pnb);}
+.prog-s[data-s="2"].active,.prog-s[data-s="2"].done{border-color:var(--pil);}
+.prog-s[data-s="3"].active,.prog-s[data-s="3"].done{border-color:var(--rn);}
+.prog-s[data-s="4"].active,.prog-s[data-s="4"].done{border-color:var(--df);}
+.prog-s[data-s="5"].active,.prog-s[data-s="5"].done{border-color:var(--bp);}
+
+.run{display:flex;flex-wrap:wrap;justify-content:center;gap:0.5rem;padding:0.4rem 0.8rem 0.8rem;max-width:780px;margin:0 auto;font-family:'JetBrains Mono',monospace;font-size:0.7rem;}
+.run-c{padding:0.3rem 0.6rem;border-radius:5px;border:1px solid var(--brd);background:var(--s1);color:var(--tx3);transition:all 0.3s;}
+.run-c.on{font-weight:600;}
+.run-c.r-pib.on{border-color:var(--pib);color:var(--pib);}
+.run-c.r-pnb.on{border-color:var(--pnb);color:var(--pnb);}
+.run-c.r-pil.on{border-color:var(--pil);color:var(--pil);}
+.run-c.r-rn.on{border-color:var(--rn);color:var(--rn);}
+
+.step{max-width:820px;margin:0 auto;display:none;}
+.step.vis{display:block;}
+.step-head{background:var(--s1);border:1px solid var(--brd);border-radius:10px;padding:1.1rem 1.3rem;margin:1rem 0 0.8rem;}
+.step-head h2{font-family:'DM Serif Display',serif;font-size:1.15rem;margin-bottom:0.25rem;}
+.step-head h2.c-pib{color:var(--pib);}
+.step-head h2.c-pnb{color:var(--pnb);}
+.step-head h2.c-pil{color:var(--pil);}
+.step-head h2.c-rn{color:var(--rn);}
+.step-head h2.c-df{color:var(--df);}
+.step-head h2.c-bp{color:var(--bp);}
+.step-head p{color:var(--tx2);font-size:0.85rem;}
+.step-head .fm{font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--tx);background:var(--s2);display:inline-block;padding:0.25rem 0.6rem;border-radius:4px;margin-top:0.4rem;}
+
+.card{background:var(--s1);border:1px solid var(--brd);border-radius:9px;padding:0.8rem 1rem;margin-bottom:0.55rem;transition:border-color 0.25s;}
+.card:hover{border-color:var(--brd2);}
+.card.ok-border{border-color:var(--ok);}
+.card-top{display:flex;align-items:flex-start;gap:0.6rem;}
+.card-n{font-family:'JetBrains Mono',monospace;font-size:0.68rem;font-weight:600;color:var(--tx3);background:var(--s2);padding:0.12rem 0.4rem;border-radius:3px;margin-top:3px;white-space:nowrap;}
+.card-t{flex:1;font-size:0.88rem;}
+.card-v{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:0.82rem;white-space:nowrap;margin-top:2px;color:var(--tx2);}
+.card-opts{display:flex;flex-wrap:wrap;gap:0.3rem;margin-top:0.5rem;}
+.obtn{font-family:'Nunito Sans',sans-serif;font-size:0.7rem;font-weight:700;padding:0.28rem 0.6rem;border-radius:5px;border:1px solid var(--brd);background:var(--s2);color:var(--tx3);cursor:pointer;transition:all 0.15s;text-transform:uppercase;letter-spacing:0.04em;}
+.obtn:hover{border-color:#555;color:var(--tx);}
+.obtn.sel{color:#fff;}
+.obtn[data-k="C"].sel{background:var(--C);border-color:var(--C);color:#0a0d12;}
+.obtn[data-k="I"].sel{background:var(--I);border-color:var(--I);color:#fff;}
+.obtn[data-k="G"].sel{background:var(--G);border-color:var(--G);color:#0a0d12;}
+.obtn[data-k="X"].sel{background:var(--X);border-color:var(--X);color:#0a0d12;}
+.obtn[data-k="M"].sel{background:var(--M);border-color:var(--M);color:#fff;}
+.obtn[data-k="FORA"].sel{background:var(--nope);border-color:var(--nope);color:#fff;}
+.obtn[data-k="RLEE+"].sel{background:#ec4899;border-color:#ec4899;color:#fff;}
+.obtn[data-k="RLEE-"].sel{background:#be185d;border-color:#be185d;color:#fff;}
+.obtn[data-k="DEP"].sel{background:var(--pil);border-color:var(--pil);color:#0a0d12;}
+.obtn[data-k="II"].sel{background:#7c3aed;border-color:#7c3aed;color:#fff;}
+.obtn[data-k="SUB"].sel{background:#2dd4bf;border-color:#2dd4bf;color:#0a0d12;}
+.obtn[data-k="W"].sel{background:#3b82f6;border-color:#3b82f6;color:#fff;}
+.obtn[data-k="K"].sel{background:#ef4444;border-color:#ef4444;color:#fff;}
+.obtn[data-k="T"].sel{background:#a3e635;border-color:#a3e635;color:#0a0d12;}
+.obtn[data-k="MX"].sel{background:#f59e0b;border-color:#f59e0b;color:#0a0d12;}
+.obtn[data-k="TC"].sel{background:#fb923c;border-color:#fb923c;color:#0a0d12;}
+.obtn[data-k="CF"].sel{background:#ea580c;border-color:#ea580c;color:#fff;}
+.obtn:disabled{opacity:0.45;cursor:default;}
+.card-fb{margin-top:0.4rem;font-size:0.78rem;padding:0.4rem 0.6rem;border-radius:5px;background:var(--s2);color:var(--ok);display:none;line-height:1.45;}
+.card-fb.show{display:block;}
+
+.acts{text-align:center;margin:1.3rem 0 2rem;}
+.btn1{font-family:'Nunito Sans',sans-serif;font-size:0.92rem;font-weight:800;padding:0.65rem 2rem;border:none;border-radius:8px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;}
+.btn1:hover{transform:translateY(-2px);}
+.btn1.b-pib{background:var(--pib);color:#0a0d12;}
+.btn1.b-pnb{background:var(--pnb);color:#fff;}
+.btn1.b-pil{background:var(--pil);color:#0a0d12;}
+.btn1.b-rn{background:var(--rn);color:#fff;}
+.btn1.b-df{background:var(--df);color:#0a0d12;}
+.btn1.b-bp{background:var(--bp);color:#fff;}
+
+.alert-box{background:var(--s2);border:1px solid var(--warn);border-radius:8px;padding:0.8rem 1.1rem;margin-bottom:0.8rem;font-size:0.85rem;color:var(--warn);text-align:center;display:none;}
+.alert-box.show{display:block;animation:shake 0.35s;}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+
+.trans{max-width:820px;margin:0 auto;display:none;}
+.trans.vis{display:block;}
+.trans-box{background:var(--s1);border:1px solid var(--brd);border-radius:12px;padding:1.8rem 1.3rem;text-align:center;margin:1.2rem 0;}
+.trans-box h3{font-family:'DM Serif Display',serif;font-size:1.15rem;margin-bottom:0.4rem;}
+.trans-val{font-family:'JetBrains Mono',monospace;font-size:1.3rem;font-weight:700;margin:0.5rem 0;}
+.trans-val.c-pib{color:var(--pib);}.trans-val.c-pnb{color:var(--pnb);}.trans-val.c-pil{color:var(--pil);}.trans-val.c-rn{color:var(--rn);}.trans-val.c-df{color:var(--df);}
+.trans-p{color:var(--tx2);font-size:0.88rem;max-width:520px;margin:0.4rem auto;}
+.trans-chain{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:0.4rem;margin:1rem 0;font-family:'JetBrains Mono',monospace;font-size:0.72rem;}
+.tc-b{padding:0.4rem 0.7rem;border-radius:6px;border:1px solid var(--brd);background:var(--s2);text-align:center;}
+.tc-b .tc-l{font-size:0.58rem;color:var(--tx3);text-transform:uppercase;}.tc-b .tc-v{font-weight:700;display:block;margin-top:1px;}
+.tc-b.c-pib .tc-v{color:var(--pib);}.tc-b.c-pnb .tc-v{color:var(--pnb);}.tc-b.c-pil .tc-v{color:var(--pil);}.tc-b.c-rn .tc-v{color:var(--rn);}
+.tc-a{color:var(--tx3);font-size:1.1rem;}
+
+.final{max-width:820px;margin:0 auto;padding:0 1rem 3rem;display:none;text-align:center;}
+.final.vis{display:block;}
+.final-box{background:var(--s1);border:1px solid var(--brd);border-radius:14px;padding:2rem 1.3rem;margin:1.2rem 0;}
+.final-box h2{font-family:'DM Serif Display',serif;font-size:1.5rem;margin-bottom:0.8rem;color:var(--ok);}
+.fsub{color:var(--tx2);font-size:0.88rem;}
+.bp-note{margin-top:1.2rem;padding:0.9rem 1rem;background:var(--s2);border-left:3px solid var(--bp);border-radius:0 8px 8px 0;text-align:left;font-size:0.84rem;color:var(--tx2);line-height:1.55;}
+.bp-note strong{color:var(--bp);}
+
+.df-bar{display:flex;height:32px;border-radius:6px;overflow:hidden;margin:0.8rem 0;font-size:0.65rem;font-weight:700;}
+.df-bar div{display:flex;align-items:center;justify-content:center;color:#0a0d12;white-space:nowrap;padding:0 0.4rem;}
+
+@media(max-width:600px){.obtn{font-size:0.62rem;padding:0.22rem 0.4rem;}.prog-s{font-size:0.52rem;padding:0.4rem 0.1rem;}.gate-input{width:160px;font-size:0.88rem;}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>Do <span>PIB à Renda Nacional</span></h1>
+  <p>Classifique 30 operações econômicas, etapa por etapa. Depois, distribua a Renda Nacional pelos fatores de produção.</p>
+</div>
+
+<!-- PAGE 1: LISTA -->
+<div id="page-list">
+  <div class="list-intro">
+    <h2>Suas 30 operações</h2>
+    <p>Copie no caderno e classifique cada operação. Quando o professor liberar, digite a senha para conferir na atividade digital.</p>
+    <p style="margin-top:0.5rem;"><strong>Dica:</strong> Pense em quais operações compõem o PIB (C, I, G, X, M) e quais não entram nesse cálculo.</p>
+  </div>
+  <div id="op-list"></div>
+  <div class="gate" id="gate">
+    <h3>Atividade Digital</h3>
+    <p>Terminou no caderno? Digite a senha que o professor vai fornecer:</p>
+    <div><input type="text" class="gate-input" id="gate-pwd" placeholder="senha" autocomplete="off"><button class="gate-btn" onclick="tryGate()">Entrar</button></div>
+    <div class="gate-err" id="gate-err">Senha incorreta. Aguarde o professor.</div>
+  </div>
+</div>
+
+<!-- PAGE 2: ATIVIDADE -->
+<div id="page-activity">
+  <div class="prog" id="prog">
+    <div class="prog-s active" data-s="0">1 · PIB</div>
+    <div class="prog-s" data-s="1">2 · PNB</div>
+    <div class="prog-s" data-s="2">3 · PIL</div>
+    <div class="prog-s" data-s="3">4 · RN</div>
+    <div class="prog-s" data-s="4">5 · Fatores</div>
+    <div class="prog-s" data-s="5">6 · BP</div>
+  </div>
+  <div class="run">
+    <div class="run-c r-pib" id="rc-pib">PIB = ?</div>
+    <div class="run-c r-pnb" id="rc-pnb">PNB = ?</div>
+    <div class="run-c r-pil" id="rc-pil">PIL = ?</div>
+    <div class="run-c r-rn" id="rc-rn">RN = ?</div>
+  </div>
+  <div id="app"></div>
+  <div class="final" id="final"></div>
+</div>
+
+<script>
+// ================================================================
+//  30 MAIN OPERATIONS
+// ================================================================
+const OPS = [
+  {id:1,  text:"Famílias compram alimentos, roupas e serviços no comércio interno", val:3200, s0:"C", later:null, laterAns:null, expl:"Consumo das famílias (C)."},
+  {id:2,  text:"Empresa brasileira adquire máquinas e equipamentos para sua fábrica", val:850, s0:"I", later:null, laterAns:null, expl:"Formação Bruta de Capital Fixo — Investimento (I)."},
+  {id:3,  text:"Governo federal paga salários dos servidores públicos", val:1100, s0:"G", later:null, laterAns:null, expl:"Gastos do Governo (G)."},
+  {id:4,  text:"Exportação de minério de ferro para a China", val:420, s0:"X", later:null, laterAns:null, expl:"Exportações (X)."},
+  {id:5,  text:"Importação de componentes eletrônicos do Japão", val:-310, s0:"M", later:null, laterAns:null, expl:"Importações (M) — entram negativas no PIB."},
+  {id:6,  text:"Construção de rodovia federal por empreiteira brasileira", val:180, s0:"I", later:null, laterAns:null, expl:"Investimento público em infraestrutura (I) — é FBKF, não consumo do governo."},
+  {id:7,  text:"Variação de estoques na indústria automobilística nacional", val:45, s0:"I", later:null, laterAns:null, expl:"Variação de estoques faz parte do Investimento (I)."},
+  {id:8,  text:"Gastos do SUS com atendimento à população", val:290, s0:"G", later:null, laterAns:null, expl:"Consumo do governo em saúde pública (G)."},
+  {id:9,  text:"Multinacional alemã constrói nova fábrica em Manaus", val:200, s0:"I", later:null, laterAns:null, expl:"Critério territorial: produção em solo brasileiro = PIB. Investimento (I)."},
+  {id:10, text:"Exportação de soja para a União Europeia", val:350, s0:"X", later:null, laterAns:null, expl:"Exportações (X)."},
+  {id:11, text:"Importação de petróleo da Arábia Saudita", val:-280, s0:"M", later:null, laterAns:null, expl:"Importações (M)."},
+  {id:12, text:"Famílias pagam mensalidades em escolas e universidades privadas", val:160, s0:"C", later:null, laterAns:null, expl:"Consumo das famílias em educação (C)."},
+  {id:13, text:"Governo estadual investe em construção de escolas públicas", val:130, s0:"I", later:null, laterAns:null, expl:"Investimento público (I) — FBKF do governo, não G."},
+  {id:14, text:"Exportação de carne bovina para o Oriente Médio", val:110, s0:"X", later:null, laterAns:null, expl:"Exportações (X)."},
+  {id:15, text:"Importação de vacinas dos Estados Unidos", val:-75, s0:"M", later:null, laterAns:null, expl:"Importações (M)."},
+  {id:16, text:"Famílias contratam serviços de streaming e telecomunicações", val:95, s0:"C", later:null, laterAns:null, expl:"Consumo das famílias (C)."},
+  {id:17, text:"Multinacional alemã remete lucros de sua fábrica no Brasil para a matriz na Alemanha", val:-90, s0:"FORA", later:1, laterAns:"RLEE-", expl:"Renda enviada ao exterior — entra no ajuste PIB → PNB."},
+  {id:18, text:"Filial brasileira em Angola envia lucros de volta ao Brasil", val:55, s0:"FORA", later:1, laterAns:"RLEE+", expl:"Renda recebida do exterior — entra no ajuste PIB → PNB."},
+  {id:19, text:"Acionistas estrangeiros recebem dividendos de empresa listada na B3", val:-70, s0:"FORA", later:1, laterAns:"RLEE-", expl:"Renda enviada ao exterior — ajuste do PNB."},
+  {id:20, text:"Brasileiros em trabalho remoto recebem salário de empresa dos EUA", val:30, s0:"FORA", later:1, laterAns:"RLEE+", expl:"Renda recebida do exterior — ajuste do PNB."},
+  {id:21, text:"Governo brasileiro paga juros ao FMI sobre empréstimos", val:-40, s0:"FORA", later:1, laterAns:"RLEE-", expl:"Juros ao exterior — renda enviada, ajuste do PNB."},
+  {id:22, text:"Empresa brasileira paga royalties ao exterior por uso de patente farmacêutica", val:-35, s0:"FORA", later:1, laterAns:"RLEE-", expl:"Royalties ao exterior — renda enviada, ajuste do PNB."},
+  {id:23, text:"Depreciação do estoque de capital fixo da economia (desgaste de máquinas, estradas, etc.)", val:-520, s0:"FORA", later:2, laterAns:"DEP", expl:"Consumo de capital fixo — transforma PNB em PIL."},
+  {id:24, text:"Arrecadação de ICMS sobre circulação de mercadorias", val:-380, s0:"FORA", later:3, laterAns:"II", expl:"Imposto indireto — ajuste PIL → Renda Nacional."},
+  {id:25, text:"Arrecadação de IPI sobre produtos industrializados", val:-95, s0:"FORA", later:3, laterAns:"II", expl:"Imposto indireto — ajuste PIL → Renda Nacional."},
+  {id:26, text:"Subsídios do governo federal a produtores agrícolas", val:60, s0:"FORA", later:3, laterAns:"SUB", expl:"Subsídios são somados de volta no cálculo da Renda Nacional."},
+  {id:27, text:"Remessas de dinheiro de imigrantes brasileiros nos EUA para suas famílias no Brasil", val:25, s0:"FORA", later:5, laterAns:"TC", expl:"Transferências unilaterais — Transações Correntes do BP."},
+  {id:28, text:"Banco Mundial concede empréstimo de US$ 2 bi ao governo brasileiro", val:40, s0:"FORA", later:5, laterAns:"CF", expl:"Entrada de capital — Conta Financeira do BP."},
+  {id:29, text:"Fundo chinês compra participação acionária de empresa brasileira (IDE)", val:120, s0:"FORA", later:5, laterAns:"CF", expl:"Investimento Direto Estrangeiro — Conta Financeira do BP."},
+  {id:30, text:"Governo brasileiro faz doação humanitária ao Haiti", val:-15, s0:"FORA", later:5, laterAns:"TC", expl:"Transferência unilateral — Transações Correntes do BP."},
+];
+
+// ================================================================
+//  FUNCTIONAL DISTRIBUTION OPERATIONS (Etapa 5)
+//  RN = 5380.  Proportions based on Brazilian SCN (~2021 data):
+//  Salários+Contrib. Sociais (Trabalho) ≈ 51%
+//  Lucros/EOB (Capital)                 ≈ 30%
+//  Juros líquidos (Capital financeiro)  ≈ 7%
+//  Aluguéis (Terra/Propriedade)         ≈ 5%
+//  Rendimento Misto (Autônomos)         ≈ 7%
+//  Total = 5380
+// ================================================================
+const DF_OPS = [
+  {id:"f1", text:"Salários pagos aos trabalhadores do setor privado formal", val:1620, ans:"W", expl:"Remuneração do trabalho assalariado — fator Trabalho."},
+  {id:"f2", text:"Salários e vencimentos dos servidores públicos (federais, estaduais e municipais)", val:860, ans:"W", expl:"Remuneração do trabalho no setor público — fator Trabalho."},
+  {id:"f3", text:"Contribuições sociais patronais (INSS, FGTS) a cargo dos empregadores", val:264, ans:"W", expl:"Contribuições sociais compõem a remuneração do trabalho nas contas nacionais — fator Trabalho."},
+  {id:"f4", text:"Lucros das empresas não financeiras (indústria, comércio, serviços)", val:1100, ans:"K", expl:"Excedente operacional bruto das empresas — remuneração do fator Capital."},
+  {id:"f5", text:"Lucros das instituições financeiras (bancos, seguradoras)", val:514, ans:"K", expl:"Excedente operacional do setor financeiro — fator Capital."},
+  {id:"f6", text:"Juros líquidos recebidos por detentores de títulos e aplicações financeiras", val:376, ans:"K", expl:"Rendimento do capital financeiro — fator Capital."},
+  {id:"f7", text:"Aluguéis recebidos por proprietários de imóveis urbanos e rurais", val:269, ans:"T", expl:"Renda da propriedade imobiliária — remuneração do fator Terra/Recursos Naturais."},
+  {id:"f8", text:"Rendimento misto de profissionais autônomos e pequenos negócios informais", val:377, ans:"MX", expl:"Rendimento misto: combina trabalho e capital do próprio autônomo — categoria específica das contas nacionais."},
+];
+// Sum check: 1620+860+264+1100+514+376+269+377 = 5380 ✓
+
+const LABELS = {
+  C:'Consumo (C)', I:'Investimento (I)', G:'Governo (G)', X:'Export. (X)', M:'Import. (M)',
+  FORA:'Não entra aqui',
+  'RLEE+':'Renda recebida (+)', 'RLEE-':'Renda enviada (−)',
+  DEP:'Depreciação', II:'Imp. Indireto', SUB:'Subsídio',
+  W:'Trabalho (w)', K:'Capital (k)', T:'Terra (t)', MX:'Rend. Misto',
+  TC:'Trans. Correntes', CF:'Conta Financeira'
+};
+
+// ================================================================
+//  PAGE 1
+// ================================================================
+const listDiv = document.getElementById('op-list');
+OPS.forEach(op => {
+  const vs = op.val > 0 ? `R$ ${op.val} bi` : op.val < 0 ? `– R$ ${Math.abs(op.val)} bi` : '—';
+  const el = document.createElement('div'); el.className='op-item';
+  el.innerHTML=`<span class="op-n">#${String(op.id).padStart(2,'0')}</span><span class="op-t">${op.text}</span><span class="op-v">${vs}</span>`;
+  listDiv.appendChild(el);
+});
+
+document.getElementById('gate-pwd').addEventListener('keydown',e=>{if(e.key==='Enter')tryGate();});
+function tryGate(){
+  if(document.getElementById('gate-pwd').value.trim().toLowerCase()==='tricolor'){
+    document.getElementById('page-list').classList.add('hide');
+    document.getElementById('page-activity').classList.add('show');
+    build(); window.scrollTo({top:0,behavior:'smooth'});
+  } else {
+    const err=document.getElementById('gate-err');err.classList.remove('show');void err.offsetWidth;err.classList.add('show');
+  }
+}
+
+// ================================================================
+//  STATE
+// ================================================================
+let curStep=0, sel={}, vals={PIB:null,PNB:null,PIL:null,RN:null}, attempts=[0,0,0,0,0,0];
+const app=document.getElementById('app');
+
+// ================================================================
+//  BUILD
+// ================================================================
+function build(){
+  app.innerHTML='';
+  // Step 0: PIB
+  let d=mkStep(0);
+  d.innerHTML=stepHead('c-pib','Etapa 1 — Montando o PIB','Classifique: Consumo (C), Investimento (I), Governo (G), Exportação (X), Importação (M) ou "Não entra aqui".','PIB = C + I + G + (X − M)')+alertBox(0);
+  OPS.forEach(op=>{d.innerHTML+=card(op,['C','I','G','X','M','FORA'],0);}); d.innerHTML+=actions(0,'b-pib','Verificar PIB'); app.appendChild(d);
+  // Step 1: PNB
+  d=mkStep(1); const s1ops=OPS.filter(o=>o.s0==='FORA');
+  d.innerHTML=stepHead('c-pnb','Etapa 2 — Do PIB ao PNB','Classifique: renda recebida do exterior (RLEE+), renda enviada (RLEE−), ou "Não entra aqui".','PNB = PIB − RLEE')+alertBox(1);
+  s1ops.forEach(op=>{d.innerHTML+=card(op,['RLEE+','RLEE-','FORA'],1);}); d.innerHTML+=actions(1,'b-pnb','Verificar PNB'); app.appendChild(d);
+  // Step 2: PIL
+  d=mkStep(2); const s2ops=OPS.filter(o=>o.s0==='FORA'&&o.later!==1);
+  d.innerHTML=stepHead('c-pil','Etapa 3 — Do PNB ao PIL','Qual é a depreciação? As demais, "Não entra aqui".','PIL = PNB − Depreciação')+alertBox(2);
+  s2ops.forEach(op=>{d.innerHTML+=card(op,['DEP','FORA'],2);}); d.innerHTML+=actions(2,'b-pil','Verificar PIL'); app.appendChild(d);
+  // Step 3: RN
+  d=mkStep(3); const s3ops=OPS.filter(o=>o.s0==='FORA'&&o.later!==1&&o.later!==2);
+  d.innerHTML=stepHead('c-rn','Etapa 4 — Do PIL à Renda Nacional','Classifique: imposto indireto (II), subsídio (SUB), ou "Não entra aqui".','RN = PIL − Impostos Indiretos + Subsídios')+alertBox(3);
+  s3ops.forEach(op=>{d.innerHTML+=card(op,['II','SUB','FORA'],3);}); d.innerHTML+=actions(3,'b-rn','Verificar Renda Nacional'); app.appendChild(d);
+  // Step 4: Distribuição Funcional
+  d=mkStep(4);
+  d.innerHTML=stepHead('c-df','Etapa 5 — Distribuição Funcional da Renda Nacional','A Renda Nacional se distribui entre os fatores de produção. Classifique cada fluxo: Trabalho (w), Capital (k), Terra (t) ou Rendimento Misto.','RN = Salários + Lucros + Juros + Aluguéis + Rend. Misto')
+    +'<div class="step-head" style="border-color:var(--df);"><p style="color:var(--tx);font-size:0.82rem;">Proporções baseadas no Sistema de Contas Nacionais do IBGE (dados de 2021). O <strong>Rendimento Misto</strong> é uma categoria própria das contas nacionais: inclui autônomos e pequenos negócios onde não é possível separar o que é remuneração do trabalho e o que é retorno do capital.</p></div>'
+    +alertBox(4);
+  DF_OPS.forEach(op=>{d.innerHTML+=dfCard(op);}); d.innerHTML+=actions(4,'b-df','Verificar Distribuição'); app.appendChild(d);
+  // Step 5: BP
+  d=mkStep(5); const s5ops=OPS.filter(o=>o.later===5);
+  d.innerHTML=stepHead('c-bp','Etapa 6 — Balanço de Pagamentos','Estas operações sobraram. Classifique: Transações Correntes (TC) ou Conta Financeira (CF)?','BP: Transações Correntes + Conta Capital e Financeira')+alertBox(5);
+  s5ops.forEach(op=>{d.innerHTML+=card(op,['TC','CF'],5);}); d.innerHTML+=actions(5,'b-bp','Verificar Balanço de Pagamentos'); app.appendChild(d);
+  showStep(0);
+}
+
+function mkStep(n){const d=document.createElement('div');d.className='step';d.id=`step-${n}`;return d;}
+function stepHead(cc,t,desc,fm){return `<div class="step-head"><h2 class="${cc}">${t}</h2><p>${desc}</p><div class="fm">${fm}</div></div>`;}
+function alertBox(n){return `<div class="alert-box" id="alert-${n}"></div>`;}
+function card(op,opts,sn){
+  const vs=op.val>0?`R$ ${op.val} bi`:op.val<0?`– R$ ${Math.abs(op.val)} bi`:'—';
+  return `<div class="card" id="c-${sn}-${op.id}"><div class="card-top"><span class="card-n">#${String(op.id).padStart(2,'0')}</span><span class="card-t">${op.text}</span><span class="card-v">${vs}</span></div><div class="card-opts">${opts.map(k=>`<button class="obtn" data-k="${k}" data-step="${sn}" data-id="${op.id}" onclick="pick('${op.id}',${sn},'${k}')">${LABELS[k]}</button>`).join('')}</div><div class="card-fb" id="fb-${sn}-${op.id}"></div></div>`;
+}
+function dfCard(op){
+  const vs=`R$ ${op.val} bi`;
+  return `<div class="card" id="c-4-${op.id}"><div class="card-top"><span class="card-n">${op.id}</span><span class="card-t">${op.text}</span><span class="card-v">${vs}</span></div><div class="card-opts">${['W','K','T','MX'].map(k=>`<button class="obtn" data-k="${k}" data-step="4" data-id="${op.id}" onclick="pick('${op.id}',4,'${k}')">${LABELS[k]}</button>`).join('')}</div><div class="card-fb" id="fb-4-${op.id}"></div></div>`;
+}
+function actions(n,bc,label){return `<div class="acts"><button class="btn1 ${bc}" onclick="check(${n})">${label}</button></div>`;}
+function pick(id,sn,key){sel[`${sn}-${id}`]=key;document.querySelectorAll(`.obtn[data-step="${sn}"][data-id="${id}"]`).forEach(b=>b.classList.toggle('sel',b.dataset.k===key));}
+
+// ================================================================
+//  CHECK
+// ================================================================
+function check(sn){document.getElementById(`alert-${sn}`).classList.remove('show');[checkPIB,checkPNB,checkPIL,checkRN,checkDF,checkBP][sn]();}
+
+function checkPIB(){
+  let ok=true,ans=true; OPS.forEach(op=>{if(!sel[`0-${op.id}`]){ans=false;return;}if(sel[`0-${op.id}`]!==op.s0)ok=false;});
+  if(!ans){showAlert(0,'Você ainda não classificou todas as operações.');return;} attempts[0]++;
+  if(!ok){const w=OPS.filter(op=>sel[`0-${op.id}`]!==op.s0).length;showAlert(0,`Há ${w} operaç${w===1?'ão classificada':'ões classificadas'} de maneira equivocada. Revise e tente novamente.`);return;}
+  let p=0;OPS.forEach(op=>{if(op.s0!=='FORA')p+=op.val;});vals.PIB=p;
+  lockFb(0,OPS);markDone(0);updateRun();
+  setTimeout(()=>showTrans(0,'PIB',vals.PIB,'Agora as operações que sobraram precisam ser classificadas. Próxima parada: o PNB.'),500);
+}
+function checkPNB(){
+  const ops=OPS.filter(o=>o.s0==='FORA');let ok=true,ans=true;
+  ops.forEach(op=>{const c=sel[`1-${op.id}`];if(!c){ans=false;return;}if(c!==(op.later===1?op.laterAns:'FORA'))ok=false;});
+  if(!ans){showAlert(1,'Classifique todas.');return;}attempts[1]++;
+  if(!ok){const w=ops.filter(op=>sel[`1-${op.id}`]!==(op.later===1?op.laterAns:'FORA')).length;showAlert(1,`Há ${w} operaç${w===1?'ão classificada':'ões classificadas'} de maneira equivocada.`);return;}
+  let a=0;ops.forEach(op=>{if(op.later===1)a+=op.val;});vals.PNB=vals.PIB+a;
+  lockFb(1,ops);markDone(1);updateRun();
+  setTimeout(()=>showTrans(1,'PNB',vals.PNB,'Hora de descontar a depreciação para chegar ao PIL.'),500);
+}
+function checkPIL(){
+  const ops=OPS.filter(o=>o.s0==='FORA'&&o.later!==1);let ok=true,ans=true;
+  ops.forEach(op=>{const c=sel[`2-${op.id}`];if(!c){ans=false;return;}if(c!==(op.later===2?op.laterAns:'FORA'))ok=false;});
+  if(!ans){showAlert(2,'Classifique todas.');return;}attempts[2]++;
+  if(!ok){const w=ops.filter(op=>sel[`2-${op.id}`]!==(op.later===2?op.laterAns:'FORA')).length;showAlert(2,`Há ${w} operaç${w===1?'ão classificada':'ões classificadas'} de maneira equivocada.`);return;}
+  let d=0;ops.forEach(op=>{if(op.later===2)d+=op.val;});vals.PIL=vals.PNB+d;
+  lockFb(2,ops);markDone(2);updateRun();
+  setTimeout(()=>showTrans(2,'PIL',vals.PIL,'Desconte os impostos indiretos líquidos de subsídios para chegar à Renda Nacional.'),500);
+}
+function checkRN(){
+  const ops=OPS.filter(o=>o.s0==='FORA'&&o.later!==1&&o.later!==2);let ok=true,ans=true;
+  ops.forEach(op=>{const c=sel[`3-${op.id}`];if(!c){ans=false;return;}if(c!==(op.later===3?op.laterAns:'FORA'))ok=false;});
+  if(!ans){showAlert(3,'Classifique todas.');return;}attempts[3]++;
+  if(!ok){const w=ops.filter(op=>sel[`3-${op.id}`]!==(op.later===3?op.laterAns:'FORA')).length;showAlert(3,`Há ${w} operaç${w===1?'ão classificada':'ões classificadas'} de maneira equivocada.`);return;}
+  let ii=0;ops.forEach(op=>{if(op.later===3)ii+=op.val;});vals.RN=vals.PIL+ii;
+  lockFb(3,ops);markDone(3);updateRun();
+  setTimeout(()=>showTrans(3,'RN',vals.RN,'Agora distribua a Renda Nacional entre os fatores de produção: Terra, Capital e Trabalho.'),500);
+}
+function checkDF(){
+  let ok=true,ans=true;
+  DF_OPS.forEach(op=>{const c=sel[`4-${op.id}`];if(!c){ans=false;return;}if(c!==op.ans)ok=false;});
+  if(!ans){showAlert(4,'Classifique todas as operações.');return;}attempts[4]++;
+  if(!ok){const w=DF_OPS.filter(op=>sel[`4-${op.id}`]!==op.ans).length;showAlert(4,`Há ${w} operaç${w===1?'ão classificada':'ões classificadas'} de maneira equivocada.`);return;}
+  DF_OPS.forEach(op=>{
+    const cd=document.getElementById(`c-4-${op.id}`);if(cd)cd.classList.add('ok-border');
+    const fb=document.getElementById(`fb-4-${op.id}`);if(fb){fb.className='card-fb show';fb.textContent=`✓ ${op.expl}`;}
+    document.querySelectorAll(`.obtn[data-step="4"][data-id="${op.id}"]`).forEach(b=>b.disabled=true);
+  });
+  markDone(4);
+  // Show distribution transition
+  setTimeout(()=>{
+    document.getElementById('step-4').classList.remove('vis');
+    let td=document.getElementById('trans-4');if(!td){td=document.createElement('div');td.className='trans';td.id='trans-4';app.appendChild(td);}
+    const wTotal=1620+860+264, kTotal=1100+514+376, tTotal=269, mxTotal=377, rn=vals.RN;
+    const wPct=((wTotal/rn)*100).toFixed(1), kPct=((kTotal/rn)*100).toFixed(1), tPct=((tTotal/rn)*100).toFixed(1), mxPct=((mxTotal/rn)*100).toFixed(1);
+    td.innerHTML=`<div class="trans-box">
+      <h3 style="color:var(--df)">Distribuição Funcional concluída! ✓</h3>
+      <p class="trans-p">A Renda Nacional de R$ ${rn.toLocaleString('pt-BR')} bilhões se distribui assim entre os fatores:</p>
+      <div class="df-bar">
+        <div style="width:${wPct}%;background:#3b82f6;">Trabalho ${wPct}%</div>
+        <div style="width:${kPct}%;background:#ef4444;">Capital ${kPct}%</div>
+        <div style="width:${mxPct}%;background:#f59e0b;">Misto ${mxPct}%</div>
+        <div style="width:${tPct}%;background:#a3e635;color:#0a0d12;">Terra ${tPct}%</div>
+      </div>
+      <p class="trans-p" style="font-size:0.8rem;margin-top:0.6rem;">Trabalho (salários + contrib. sociais): R$ ${wTotal.toLocaleString('pt-BR')} bi · Capital (lucros + juros): R$ ${kTotal.toLocaleString('pt-BR')} bi · Rend. Misto: R$ ${mxTotal.toLocaleString('pt-BR')} bi · Terra (aluguéis): R$ ${tTotal.toLocaleString('pt-BR')} bi</p>
+      <p class="trans-p">Sobraram operações que pertencem ao Balanço de Pagamentos. Classifique-as!</p>
+      <div style="margin-top:1rem;"><button class="btn1 b-bp" onclick="goTo(5)">Avançar para Etapa 6 →</button></div>
+    </div>`;
+    td.classList.add('vis');td.scrollIntoView({behavior:'smooth',block:'center'});
+  },500);
+}
+function checkBP(){
+  const ops=OPS.filter(o=>o.later===5);let ok=true,ans=true;
+  ops.forEach(op=>{const c=sel[`5-${op.id}`];if(!c){ans=false;return;}if(c!==op.laterAns)ok=false;});
+  if(!ans){showAlert(5,'Classifique todas.');return;}attempts[5]++;
+  if(!ok){const w=ops.filter(op=>sel[`5-${op.id}`]!==op.laterAns).length;showAlert(5,`Há ${w} operaç${w===1?'ão classificada':'ões classificadas'} de maneira equivocada.`);return;}
+  lockFb(5,ops);markDone(5);
+  setTimeout(()=>showFinal(),500);
+}
+
+// ================================================================
+//  UI HELPERS
+// ================================================================
+function lockFb(sn,ops){ops.forEach(op=>{const cd=document.getElementById(`c-${sn}-${op.id}`);if(cd)cd.classList.add('ok-border');const fb=document.getElementById(`fb-${sn}-${op.id}`);if(fb){fb.className='card-fb show';fb.textContent=`✓ ${op.expl}`;}document.querySelectorAll(`.obtn[data-step="${sn}"][data-id="${op.id}"]`).forEach(b=>b.disabled=true);});}
+function showAlert(n,msg){const ab=document.getElementById(`alert-${n}`);ab.textContent=msg;ab.classList.remove('show');void ab.offsetWidth;ab.classList.add('show');ab.scrollIntoView({behavior:'smooth',block:'center'});}
+function markDone(n){const ps=document.querySelectorAll('.prog-s');ps[n].classList.remove('active');ps[n].classList.add('done');}
+function showStep(n){document.querySelectorAll('.step').forEach(s=>s.classList.remove('vis'));document.querySelectorAll('.trans').forEach(t=>t.classList.remove('vis'));const el=document.getElementById(`step-${n}`);if(el){el.classList.add('vis');el.scrollIntoView({behavior:'smooth',block:'start'});}const ps=document.querySelectorAll('.prog-s');if(ps[n]&&!ps[n].classList.contains('done'))ps[n].classList.add('active');}
+function updateRun(){[{el:document.getElementById('rc-pib'),k:'PIB',l:'PIB'},{el:document.getElementById('rc-pnb'),k:'PNB',l:'PNB'},{el:document.getElementById('rc-pil'),k:'PIL',l:'PIL'},{el:document.getElementById('rc-rn'),k:'RN',l:'RN'}].forEach(i=>{if(vals[i.k]!==null){i.el.textContent=`${i.l} = R$ ${vals[i.k].toLocaleString('pt-BR')} bi`;i.el.classList.add('on');}});}
+
+function showTrans(from,label,val,msg){
+  document.getElementById(`step-${from}`).classList.remove('vis');
+  let td=document.getElementById(`trans-${from}`);if(!td){td=document.createElement('div');td.className='trans';td.id=`trans-${from}`;app.appendChild(td);}
+  const colors=['pib','pnb','pil','rn','df','bp'];
+  const nextC=['pnb','pil','rn','df','bp'];
+  const nextL=['Avançar para Etapa 2 →','Avançar para Etapa 3 →','Avançar para Etapa 4 →','Avançar para Etapa 5 →','Avançar para Etapa 6 →'];
+  let chain='';['PIB','PNB','PIL','RN'].forEach((a,i)=>{if(vals[a]!==null){if(i>0&&vals[['PIB','PNB','PIL','RN'][i-1]]!==null)chain+=`<span class="tc-a">→</span>`;chain+=`<div class="tc-b c-${colors[i]}"><span class="tc-l">${a}</span><span class="tc-v">R$ ${vals[a].toLocaleString('pt-BR')} bi</span></div>`;}});
+  td.innerHTML=`<div class="trans-box"><h3 style="color:var(--${colors[from]})">Etapa ${from+1} concluída! ✓</h3><div class="trans-val c-${colors[from]}">${label} = R$ ${val.toLocaleString('pt-BR')} bilhões</div><div class="trans-chain">${chain}</div><p class="trans-p">${msg}</p><div style="margin-top:1rem;"><button class="btn1 b-${nextC[from]}" onclick="goTo(${from+1})">${nextL[from]}</button></div></div>`;
+  td.classList.add('vis');td.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function goTo(n){curStep=n;document.querySelectorAll('.trans').forEach(t=>t.classList.remove('vis'));showStep(n);}
+
+function showFinal(){
+  document.getElementById('step-5').classList.remove('vis');
+  const fin=document.getElementById('final');fin.classList.add('vis');
+  const v=vals,ta=attempts.reduce((a,b)=>a+b,0);
+  let chain='';['PIB','PNB','PIL','RN'].forEach((a,i)=>{const cs=['pib','pnb','pil','rn'];if(i>0)chain+=`<span class="tc-a">→</span>`;chain+=`<div class="tc-b c-${cs[i]}"><span class="tc-l">${a}</span><span class="tc-v">R$ ${v[a].toLocaleString('pt-BR')} bi</span></div>`;});
+  const wT=1620+860+264, kT=1100+514+376, tT=269, mxT=377, rn=v.RN;
+  fin.innerHTML=`<div class="final-box">
+    <h2>Jornada Completa!</h2>
+    <div class="trans-chain" style="margin-bottom:1rem;">${chain}</div>
+    <div class="df-bar" style="max-width:500px;margin:0.8rem auto;">
+      <div style="width:${((wT/rn)*100).toFixed(1)}%;background:#3b82f6;">w ${((wT/rn)*100).toFixed(0)}%</div>
+      <div style="width:${((kT/rn)*100).toFixed(1)}%;background:#ef4444;">k ${((kT/rn)*100).toFixed(0)}%</div>
+      <div style="width:${((mxT/rn)*100).toFixed(1)}%;background:#f59e0b;">mx ${((mxT/rn)*100).toFixed(0)}%</div>
+      <div style="width:${((tT/rn)*100).toFixed(1)}%;background:#a3e635;color:#0a0d12;">t ${((tT/rn)*100).toFixed(0)}%</div>
+    </div>
+    <p class="fsub">Você construiu a cadeia PIB → PNB → PIL → RN, distribuiu a renda pelos fatores de produção e classificou o Balanço de Pagamentos.</p>
+    <p class="fsub" style="margin-top:0.5rem;">Total de tentativas: <strong style="color:var(--ok)">${ta}</strong></p>
+    <div class="bp-note"><strong>Resumo:</strong> A Renda Nacional se distribui entre Trabalho (~51%), Capital (~37%), Rendimento Misto (~7%) e Terra (~5%). Essas proporções refletem a estrutura produtiva brasileira segundo o SCN/IBGE. As 4 operações do Balanço de Pagamentos registram fluxos entre residentes e não-residentes — tema da próxima aula.</div>
+  </div>
+  <div style="margin-top:1rem;"><button class="btn1 b-pib" onclick="location.reload()" style="font-size:0.82rem;padding:0.5rem 1.5rem;">Recomeçar</button></div>`;
+  fin.scrollIntoView({behavior:'smooth',block:'center'});
+}
+</script>
+</body>
+</html>
